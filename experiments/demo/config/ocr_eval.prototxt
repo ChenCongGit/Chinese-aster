@@ -1,0 +1,145 @@
+model {
+  multi_predictors_recognition_model {
+    
+    feature_extractor {
+      convnet {
+        resnet {
+          net_type: SINGLE_BRANCH
+          net_depth: RESNET_50
+          conv_hyperparams {
+            op: CONV
+            regularizer { l2_regularizer { weight: 0 } }
+            initializer { variance_scaling_initializer { } }
+            batch_norm { decay: 0.99 }
+          }
+          summarize_activations: false
+        }
+      }
+      bidirectional_rnn {
+        static: true
+        fw_bw_rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_output_units: 256
+        fc_hyperparams {
+          op: FC
+          activation: RELU
+          initializer { variance_scaling_initializer { } }
+          regularizer { l2_regularizer { weight: 0 } }
+        }
+      }
+      bidirectional_rnn {
+        static: true
+        fw_bw_rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_output_units: 256
+        fc_hyperparams {
+          op: FC
+          activation: RELU
+          initializer { variance_scaling_initializer { } }
+          regularizer { l2_regularizer { weight: 0 } }
+        }
+      }
+      summarize_activations: false
+    }
+
+    predictor {
+      name: "Forward"
+      attention_predictor {
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_attention_units: 256
+        max_num_steps: 50
+        multi_attention: false
+        beam_width: 5
+        reverse: false
+        label_map {
+          character_set {
+            built_in_set: ALLCASES_SYMBOLS
+          }
+          label_offset: 2
+        }
+        loss {
+          sequence_cross_entropy_loss {
+            sequence_normalize: false
+            sample_normalize: true
+            weight: 0.5
+          }
+        }
+        sync: true
+      }
+    }
+
+    predictor {
+      name: "Backward"
+      attention_predictor {
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_attention_units: 256
+        max_num_steps: 50
+        multi_attention: false
+        beam_width: 5
+        reverse: true
+        label_map {
+          character_set {
+            built_in_set: ALLCASES_SYMBOLS
+          }
+          label_offset: 2
+        }
+        loss {
+          sequence_cross_entropy_loss {
+            sequence_normalize: false
+            sample_normalize: true
+            weight: 0.5
+          }
+        }
+        sync: true
+      }
+    }
+  }
+}
+
+eval_config {
+  metrics_set: "recognition_metrics"
+  num_examples: 2998
+  data_preprocessing_steps {
+    resize_image {
+      target_height: 64
+      target_width: 256
+    }
+  }
+  num_visualizations: 0
+  visualization_export_dir: ""
+}
+
+eval_input_reader {
+  num_epochs: 1
+  num_readers: 1
+  shuffle: false
+  tf_record_input_reader {
+    input_path: "Chinese_aster/ocr_dataset/synth_ocr_test.tfrecord"
+  }
+}

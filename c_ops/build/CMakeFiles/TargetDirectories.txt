@@ -1,0 +1,3 @@
+/home/liushixin/AI/chendali/Chencong_OCR/Chinese_aster/c_ops/build/CMakeFiles/edit_cache.dir
+/home/liushixin/AI/chendali/Chencong_OCR/Chinese_aster/c_ops/build/CMakeFiles/rebuild_cache.dir
+/home/liushixin/AI/chendali/Chencong_OCR/Chinese_aster/c_ops/build/CMakeFiles/Chinese_aster.dir

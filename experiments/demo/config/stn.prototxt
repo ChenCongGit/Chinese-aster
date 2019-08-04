@@ -1,0 +1,55 @@
+spatial_transformer {
+      convnet {
+        stn_convnet {
+          conv_hyperparams {
+            op: CONV
+            regularizer { l2_regularizer { weight: 0 } }
+            initializer { variance_scaling_initializer { } }
+            batch_norm { decay: 0.99 }
+          }
+        }
+      }
+      fc_hyperparams {
+        op: FC
+        regularizer { l2_regularizer { weight: 0 } }
+        initializer { variance_scaling_initializer { } }
+        batch_norm { decay: 0.99 }
+      }
+      localization_h: 32
+      localization_w: 64
+      output_h: 32
+      output_w: 100
+      margin_x: 0
+      margin_y: 0
+      num_control_points: 20
+      init_bias_pattern: "sine"
+      summarize_activations: true
+    }
+
+spatial_transformer {
+      convnet {
+        stn_convnet {
+          conv_hyperparams {
+            op: CONV
+            regularizer { l2_regularizer { weight: 0 } }
+            initializer { variance_scaling_initializer { } }
+            batch_norm { decay: 0.99 }
+          }
+        }
+      }
+      fc_hyperparams {
+        op: FC
+        regularizer { l2_regularizer { weight: 0 } }
+        initializer { variance_scaling_initializer { } }
+        batch_norm { decay: 0.99 }
+      }
+      localization_h: 32
+      localization_w: 64
+      output_h: 32
+      output_w: 100
+      margin_x: 0
+      margin_y: 0
+      num_control_points: 20
+      init_bias_pattern: "sine"
+      summarize_activations: true
+    }

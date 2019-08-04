@@ -1,0 +1,193 @@
+model {
+  multi_predictors_recognition_model {
+    
+    feature_extractor {
+      convnet {
+        resnet {
+          net_type: SINGLE_BRANCH
+          net_depth: RESNET_50
+          conv_hyperparams {
+            op: CONV
+            regularizer { l2_regularizer { weight: 0 } }
+            initializer { variance_scaling_initializer { } }
+            batch_norm { decay: 0.99 }
+          }
+          summarize_activations: false
+        }
+      }
+      bidirectional_rnn {
+        static: true
+        fw_bw_rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_output_units: 256
+        fc_hyperparams {
+          op: FC
+          activation: RELU
+          initializer { variance_scaling_initializer { } }
+          regularizer { l2_regularizer { weight: 0 } }
+        }
+      }
+      bidirectional_rnn {
+        static: true
+        fw_bw_rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_output_units: 256
+        fc_hyperparams {
+          op: FC
+          activation: RELU
+          initializer { variance_scaling_initializer { } }
+          regularizer { l2_regularizer { weight: 0 } }
+        }
+      }
+      summarize_activations: false
+    }
+
+    predictor {
+      name: "Forward"
+      attention_predictor {
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_attention_units: 256
+        max_num_steps: 50
+        multi_attention: false
+        beam_width: 5
+        reverse: false
+        label_map {
+          character_set {
+            built_in_set: ALLCASES_SYMBOLS
+          }
+          label_offset: 2
+        }
+        loss {
+          sequence_cross_entropy_loss {
+            sequence_normalize: false
+            sample_normalize: true
+            weight: 0.5
+          }
+        }
+        sync: true
+      }
+    }
+
+    predictor {
+      name: "Backward"
+      attention_predictor {
+        rnn_cell {
+          lstm_cell {
+            num_units: 256
+            forget_bias: 1.0
+            initializer { orthogonal_initializer { } }
+          }
+        }
+        rnn_regularizer { l2_regularizer { weight: 0 } }
+        num_attention_units: 256
+        max_num_steps: 50
+        multi_attention: false
+        beam_width: 5
+        reverse: true
+        label_map {
+          character_set {
+            built_in_set: ALLCASES_SYMBOLS
+          }
+          label_offset: 2
+        }
+        loss {
+          sequence_cross_entropy_loss {
+            sequence_normalize: false
+            sample_normalize: true
+            weight: 0.5
+          }
+        }
+        sync: true
+      }
+    }
+  }
+}
+
+train_config {
+  batch_size: [128]
+  data_augmentation_options {
+    random_rotate { }
+  }
+  data_augmentation_options {
+    image_to_float { }
+  }
+  data_augmentation_options {
+    resize_image_random_method {
+      target_height: 32
+      target_width: 256
+    }
+  }
+  data_augmentation_options {
+    random_pixel_value_scale { }
+  }
+  data_augmentation_options {
+    random_adjust_brightness { }
+  }
+  data_augmentation_options {
+    random_adjust_contrast { }
+  }
+  data_augmentation_options {
+    random_adjust_hue { }
+  }
+  data_augmentation_options {
+    random_adjust_saturation { }
+  }
+
+  keep_checkpoint_every_n_hours: 600
+  optimizer {
+    adadelta_optimizer {
+      learning_rate {
+        manual_step_learning_rate {
+          initial_learning_rate: 1
+          schedule {
+            step: 15000
+            learning_rate: 1e-1
+          }
+          schedule {
+            step: 17000
+            learning_rate: 0.05
+          }
+          schedule {
+            step: 20000
+            learning_rate: 1e-2
+          }
+          schedule {
+            step: 25000
+            learning_rate: 1e-3
+          }
+        }
+      }
+    }
+  }
+  num_steps: 30000
+  prefetch_queue_capacity: 100
+  save_summaries_steps: 1000
+}
+
+train_input_reader {
+  num_readers: 4
+  shuffle: true
+  tf_record_input_reader {
+    input_path: "Chinese_aster/ocr_dataset/ocr_train.tfrecord"
+  }
+}
+
